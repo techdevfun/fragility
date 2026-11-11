@@ -1,0 +1,56 @@
+# fragility demo - real CLI output on a SYNTHETIC SEEDED fixture repo
+# (seed 20261111; main = 1,199-line AI-style change, healthy = 19-line fix;
+#  see examples/README.md and scripts/make-demo-repo.sh for provenance.)
+
+$ fragility explain
+fragility measures four fragility modes of AI-written code:
+
+  tests          shallow tests on the changed lines
+  abstraction    over-complex / over-DRY code, hard to debug
+  comprehension  lines nobody understands or re-touched
+  review         PRs arriving faster than human review
+  score          how the composite FRAGILITY SCORE is built
+
+Run `fragility explain <signal>` for the measurement method,
+thresholds, and sources of one signal.
+
+$ cd demo-repo && fragility audit --base HEAD~1
+fragility audit - git range HEAD~1..HEAD in /tmp/fragility-demo/repo
+
+Signal               Score  Verdict  Detail
+------------------------------------------------------------------------------------------------------------
+Test shallowness       10   WEAK     4 test(s), 3 assertion(s) (0.75/test); 100% weak assertions; 1 test(s) assert nothing; no edge-case tests
+Over-abstraction       45   WEAK     69 changed function(s), max call depth 8, 66 flagged; worst: src/checkout.ts:70 processOrder (call depth 8 >= 4)
+Comprehension debt     25   WEAK     100% orphan lines (1169/1169 un-retouched since an AI-marked commit), 1 author on these files in 90d
+Review bottleneck       0   WEAK     1199 lines changed, detection estimate 28% (over 1,000 lines, SmartBear curve), 1225/day over 30d; split into ~3 chunks
+------------------------------------------------------------------------------------------------------------
+FRAGILITY SCORE 20/100 - FRAGILE
+exit: 1
+
+$ git checkout healthy && fragility audit --base HEAD~1
+fragility audit - git range HEAD~1..HEAD in /tmp/fragility-demo/repo
+
+Signal               Score  Verdict  Detail
+------------------------------------------------------------------------------------------------------------
+Test shallowness      100   ROBUST   2 test(s), 3 assertion(s) (1.50/test)
+Over-abstraction      100   ROBUST   1 changed function(s), max call depth 1, 0 flagged
+Comprehension debt     85   ROBUST   0% orphan lines (0/8 un-retouched since an AI-marked commit), 1 author on these files in 90d
+Review bottleneck     100   ROBUST   19 lines changed, detection estimate 87% (under 100 lines, SmartBear curve), 45/day over 30d
+------------------------------------------------------------------------------------------------------------
+FRAGILITY SCORE 96/100 - ROBUST
+exit: 0
+
+$ fragility audit --diff examples/pr-fragile.diff --format json
+{
+  "tool": "fragility",
+  "version": "0.1.0",
+  "source": "diff file examples/pr-fragile.diff",
+  "composite": 47,
+  "verdict": "FRAGILE",
+  "exitCode": 1,
+  "signals": [
+    {
+      "id": "tests",
+      "name": "Test shallowness",
+      "score": 10,
+exit: 1

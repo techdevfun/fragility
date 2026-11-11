@@ -1,0 +1,34 @@
+# SYNTHETIC SEEDED FIXTURE (seed 20261111) - not a real project.
+# A small, well-tested change: one 8-line function, two tests with
+# three real assertions, one of them an edge case (negative amount).
+diff --git a/src/format.ts b/src/format.ts
+new file mode 100644
+index 0000000..5555555
+--- /dev/null
++++ b/src/format.ts
+@@ -0,0 +1,8 @@
++// Currency formatter - synthetic fixture (seed 20261111).
++export function formatUsd(cents: number): string {
++  if (cents < 0) throw new Error("negative amount");
++  const dollars = Math.floor(cents / 100);
++  const rest = cents % 100;
++  const padded = rest < 10 ? "0" + String(rest) : String(rest);
++  return "$" + String(dollars) + "." + padded;
++}
+diff --git a/src/format.test.ts b/src/format.test.ts
+new file mode 100644
+index 0000000..6666666
+--- /dev/null
++++ b/src/format.test.ts
+@@ -0,0 +1,11 @@
++// Tests for formatUsd - synthetic fixture (seed 20261111).
++import { formatUsd } from "./format";
++
++test("formats dollars and cents", () => {
++  expect(formatUsd(199)).toBe("$1.99");
++  expect(formatUsd(100)).toBe("$1.00");
++});
++
++test("rejects negative amounts", () => {
++  expect(() => formatUsd(-5)).toThrow("negative amount");
++});
