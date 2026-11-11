@@ -165,6 +165,61 @@ test("e2e: git range audit - AI-marked commit shows as orphan lines", () => {
   assert.doesNotMatch(r.out, /SKIPPED/);
 });
 
+test("e2e: git range audit - AI marker as body trailer shows as orphan lines (H-1)", () => {
+  // Council reproduction 2026-11-11: the marker is a Co-Authored-By:
+  // trailer in the commit BODY (the real-world convention), not the
+  // subject. Before the fix the tool reported 0% orphan lines,
+  // composite 74 WATCH exit 0; truth is FRAGILE exit 1.
+  const dir = makeRepo();
+  const fragileSrc = [
+    "function step1(x: number): number { return x + 1; }",
+    "function step2(x: number): number { return step1(x) + 1; }",
+    "function step3(x: number): number { return step2(x) + 1; }",
+    "function step4(x: number): number { return step3(x) + 1; }",
+    "function step5(x: number): number { return step4(x) + 1; }",
+    "export function pipeline(x: number): number { return step5(x); }",
+    "",
+  ].join("\n");
+  writeFileSync(join(dir, "src", "pipe.ts"), fragileSrc);
+  writeFileSync(
+    join(dir, "src", "pipe.test.ts"),
+    'import { pipeline } from "./pipe";\n\ntest("pipeline runs", () => {\n  expect(pipeline(1)).toBeTruthy();\n});\n',
+  );
+  git(dir, "add", ".");
+  git(dir, "commit", "-m", "Add pipeline", "-m", "Co-Authored-By: Claude <noreply@anthropic.com>");
+  const r = runCli(["audit", "--base", "HEAD~1"], dir);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /FRAGILE/);
+  assert.match(r.out, /100% orphan lines/);
+  assert.match(r.out, /Over-abstraction/);
+  assert.doesNotMatch(r.out, /SKIPPED/);
+});
+
+test("e2e: git range audit - body merely mentioning Claude is not a marker", () => {
+  const dir = makeRepo();
+  writeFileSync(
+    join(dir, "src", "util.ts"),
+    'export function add(a: number, b: number): number {\n  return a + b;\n}\n\nexport function mul(a: number, b: number): number {\n  if (a < 0 || b < 0) throw new Error("negative");\n  return a * b;\n}\n',
+  );
+  writeFileSync(
+    join(dir, "src", "util.test.ts"),
+    'import { add, mul } from "./util";\n\ntest("adds", () => {\n  expect(add(1, 2)).toBe(3);\n});\n\ntest("rejects negative factors", () => {\n  expect(() => mul(-1, 2)).toThrow("negative");\n  expect(mul(2, 3)).toBe(6);\n});\n',
+  );
+  git(dir, "add", ".");
+  git(
+    dir,
+    "commit",
+    "-m",
+    "Add mul with edge-case tests",
+    "-m",
+    "Reviewed Claude's comments on the PR before merging",
+  );
+  const r = runCli(["audit", "--base", "HEAD~1"], dir);
+  assert.equal(r.code, 0);
+  assert.match(r.out, /ROBUST/);
+  assert.match(r.out, /0% orphan lines/);
+});
+
 test("e2e: git range audit - small human commit is ROBUST", () => {
   const dir = makeRepo();
   writeFileSync(

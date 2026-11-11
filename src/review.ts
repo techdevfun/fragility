@@ -11,8 +11,10 @@
  *    comment at all. Source: SmartBear, cited in the README.
  * 2. Review velocity: lines merged per day over the last 30 days from
  *    git log --numstat, compared with a 400 lines/day sustainable
- *    review capacity (the top of SmartBear's effective-review band,
- *    200-400 lines per ~60-minute session). A heuristic benchmark,
+ *    review capacity. That 400 is a heuristic default chosen for this
+ *    tool, NOT a published figure: SmartBear's data covers
+ *    defect-detection rate by PR size, not daily review velocity, so
+ *    it cannot justify a per-day capacity. A heuristic benchmark,
  *    not a measurement of any team's capacity.
  */
 import { velocityLines } from "./git.js";

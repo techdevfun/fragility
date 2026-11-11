@@ -79,25 +79,38 @@ export interface CommitInfo {
   authorName: string;
   date: string; // YYYY-MM-DD
   subject: string;
+  /**
+   * Full commit message (subject + body), whitespace-normalised.
+   * Marker matching MUST run against this, not the subject alone:
+   * the real-world convention puts `Co-Authored-By:` trailers in
+   * the commit BODY, never the subject. The subject stays available
+   * for display; it is a prefix of the message, never the match text.
+   */
+  message: string;
 }
 
-/** One git log call returning every commit's subject + author + date. */
+/**
+ * One git log call returning every commit's full message + author +
+ * date. Records are separated by %x1e (a byte that cannot appear in
+ * a commit message) because %B spans lines; fields by %x00.
+ */
 export function logCommits(repoDir: string, sinceDays?: number): CommitInfo[] {
-  const args = ["log", "--format=%H%x00%an%x00%ae%x00%ad%x00%s", "--date=short"];
+  const args = ["log", "--format=%H%x00%an%x00%ae%x00%ad%x00%s%x00%B%x1e", "--date=short"];
   if (sinceDays !== undefined) args.push(`--since=${sinceDays} days ago`);
   const raw = runGit(repoDir, args);
   if (raw === null) return [];
   const out: CommitInfo[] = [];
-  for (const line of raw.split("\n")) {
-    if (!line.trim()) continue;
-    const parts = line.split("\x00");
-    if (parts.length < 5) continue;
+  for (const record of raw.split("\x1e")) {
+    if (!record.trim()) continue;
+    const parts = record.split("\x00");
+    if (parts.length < 6) continue;
     out.push({
       hash: parts[0],
       authorName: parts[1],
       authorEmail: parts[2],
       date: parts[3],
       subject: parts[4],
+      message: parts[5].replace(/\s+/g, " ").trim(),
     });
   }
   return out;

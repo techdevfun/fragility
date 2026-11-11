@@ -85,8 +85,8 @@ node dist/cli.js audit --diff examples/pr-healthy.diff
 | --- | --- | --- |
 | **Test shallowness** | Whether the tests covering the changed lines actually check anything: assertions per test, tests that assert nothing, weak matchers (`toBeTruthy`, `toBeDefined`, `assert x is not None`), edge-case tests. With `--coverage`, LCOV branch/line coverage of the changed lines only. | Start 100. -40 under 1 assertion/test. -25 if over half the assertions are weak (-10 if any are weak). -15 if any test asserts nothing. -10 with no edge-case test. With coverage: -(1 - rate) * 30. |
 | **Over-abstraction** | How deep the changed TS/JS functions delegate: call-chain depth (longest chain of calls to locally defined functions), parameter count, branch count, function length. | Thresholds: depth >= 4, params >= 5, branches >= 10, length > 80 lines. Each flagged function -15 (max -45); max depth >= 6 costs -10 more. |
-| **Comprehension debt** | The share of changed lines nobody has re-touched since an AI-marked commit (git blame + commit-message markers such as "Co-Authored-By: Claude", configurable), plus how many distinct authors touched these files in the last 90 days. | -(orphan ratio * 60); -15 when exactly one author touched the files in 90 days. |
-| **Review bottleneck** | Diff size mapped to the SmartBear detection curve (2,500 PRs: ~87% of defects caught under 100 lines, 78% at 100-300, 65% at 300-600, 42% at 600-1,000, 28% above 1,000), plus lines merged per day over the last 30 days vs a 400 lines/day sustainable review capacity. | Detection estimate mapped 87 -> 100, 28 -> 0. Velocity over 400 lines/day -20; over 800 -35. |
+| **Comprehension debt** | The share of changed lines nobody has re-touched since an AI-marked commit (git blame + commit-message markers such as "Co-Authored-By: Claude", configurable; markers are matched against the full commit message, subject + body, so a `Co-Authored-By:` trailer in the body counts), plus how many distinct authors touched these files in the last 90 days. | -(orphan ratio * 60); -15 when exactly one author touched the files in 90 days. |
+| **Review bottleneck** | Diff size mapped to the SmartBear detection curve (2,500 PRs: ~87% of defects caught under 100 lines, 78% at 100-300, 65% at 300-600, 42% at 600-1,000, 28% above 1,000), plus lines merged per day over the last 30 days vs a 400 lines/day sustainable review capacity (a heuristic default, not a SmartBear figure - SmartBear's data is about defect detection by PR size, not daily velocity). | Detection estimate mapped 87 -> 100, 28 -> 0. Velocity over 400 lines/day -20; over 800 -35. |
 
 The composite **FRAGILITY SCORE** is the mean of the signals that ran
 (0-100, 100 = robust). ROBUST >= 80, WATCH 60-79, FRAGILE < 60.
@@ -134,6 +134,9 @@ code - no account, no key, no server.
 - The detection-rate curve is population data (SmartBear, 2,500 PRs),
   not a prediction for your PR. It is reported as an estimate, with the
   source named.
+- The 400 lines/day sustainable review capacity is a heuristic default
+  chosen for this tool, not a published benchmark: SmartBear's data
+  covers defect detection by PR size, not daily review velocity.
 - The tool does not score code "quality" and does not review diffs. It
   reports whether the four fragility signals are present, where, and
   how strongly. What you do about a FRAGILE verdict is a team decision.

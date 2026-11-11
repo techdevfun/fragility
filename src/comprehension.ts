@@ -3,8 +3,11 @@
  *
  * Orphan ratio: the share of changed lines whose last-touching commit
  * (via git blame) carries an AI marker, meaning nobody has re-touched
- * those lines since an AI-marked commit. This is a heuristic about
- * commit messages, NOT proof of authorship: a commit without a marker
+ * those lines since an AI-marked commit. Markers are matched against
+ * the FULL commit message (subject + body): the standard
+ * `Co-Authored-By:` trailer lives in the body, never the subject, so
+ * matching the subject alone silently misses real AI-marked commits.
+ * This is a heuristic about commit messages, NOT proof of authorship: a commit without a marker
  * may still be AI-written, and a marker may be a false positive. The
  * tool reports "lines un-retouched since an AI-marked commit", never
  * "lines AI wrote".
@@ -30,8 +33,14 @@ export const DEFAULT_MARKERS = [
   "generated with ai",
 ];
 
-export function isAiMarked(subject: string, markers: string[] = DEFAULT_MARKERS): boolean {
-  const lower = subject.toLowerCase();
+/**
+ * True when the FULL commit message (subject + body) contains any AI
+ * marker. Substring match, case-insensitive, no word-boundary guard:
+ * a bare mention of a tool name ("Reviewed Claude's comments") is
+ * not a marker, but any sentence containing a marker phrase is.
+ */
+export function isAiMarked(message: string, markers: string[] = DEFAULT_MARKERS): boolean {
+  const lower = message.toLowerCase();
   return markers.some((m) => lower.includes(m.toLowerCase()));
 }
 
@@ -75,7 +84,7 @@ export function analyzeComprehension(
       const hash = blame.get(ln);
       if (!hash) continue; // uncommitted / new file: not orphan, not human either
       const c = byHash.get(hash);
-      if (c && isAiMarked(c.subject, markers)) orphan++;
+      if (c && isAiMarked(c.message, markers)) orphan++;
     }
   }
   if (!blameWorked) {
