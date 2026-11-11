@@ -264,7 +264,9 @@ function runAudit(opts: AuditOptions): number {
       };
 
   // --- 5. Signal 4: review bottleneck ------------------------------------
-  const review = analyzeReview(gitDir, diff.totalChanged);
+  // Velocity is measured only for a git range audit. A diff file has no
+  // repo context, so the current directory's history must not leak in.
+  const review = analyzeReview(gitDir, diff.totalChanged, !opts.diffFile);
 
   // --- 6. Score + output -------------------------------------------------
   const signals = [

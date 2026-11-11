@@ -51,6 +51,8 @@ export const EXPLAIN: Record<string, string> = {
   capacity (top of SmartBear's effective-review band).
   Scoring: the detection estimate is mapped 87 -> 100, 28 -> 0.
   Velocity over 400 lines/day costs 20; over 800 costs 35.
+  Velocity is only measured for a git range audit. A diff file has no
+  repo context, so the current directory's history is never used.
   Limits: the curve is population data, not a prediction for this
   PR. It is reported as an estimate, with the source named.`,
   score: `Composite - FRAGILITY SCORE

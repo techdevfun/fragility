@@ -247,6 +247,7 @@ test("scoring: fragile fixture signals", () => {
     activeDays: 0,
     suggestedChunks: 1,
     skippedVelocity: true,
+    velocityNote: "velocity not measured (diff file has no repo context)",
   });
   assert.equal(s4.score, 85);
   const comp = compositeScore([s1, s2, s4], 60);

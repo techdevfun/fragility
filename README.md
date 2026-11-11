@@ -69,7 +69,7 @@ Signal               Score  Verdict  Detail
 Test shallowness       10   WEAK     4 test(s), 3 assertion(s) (0.75/test); 100% weak assertions; 1 test(s) assert nothing; no edge-case tests
 Over-abstraction       45   WEAK     8 changed function(s), max call depth 8, 5 flagged; worst: src/checkout.ts:70 processOrder (call depth 8 >= 4)
 Comprehension debt     -   SKIPPED  no git history
-Review bottleneck      85   ROBUST   113 lines changed, detection estimate 78% (100-300 lines, SmartBear curve), velocity unknown (no git history)
+Review bottleneck      85   ROBUST   113 lines changed, detection estimate 78% (100-300 lines, SmartBear curve), velocity not measured (diff file has no repo context)
 ------------------------------------------------------------------------
 FRAGILITY SCORE 47/100 - FRAGILE (skipped: comprehension - no git history)
 ```

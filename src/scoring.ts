@@ -158,7 +158,7 @@ export function scoreReview(res: ReviewResult): SignalScore {
     `(${res.band.label}, SmartBear curve)` +
     (res.linesPerDay !== null
       ? `, ${Math.round(res.linesPerDay)}/day over 30d`
-      : ", velocity unknown (no git history)") +
+      : `, ${res.velocityNote}`) +
     (res.suggestedChunks > 1 ? `; split into ~${res.suggestedChunks} chunks` : "");
   return {
     id: "review",

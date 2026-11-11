@@ -44,27 +44,43 @@ export const EFFECTIVE_REVIEW_BAND = 400; // lines per reviewable chunk
 export interface ReviewResult {
   totalChanged: number;
   band: DetectionBand;
-  linesPerDay: number | null; // null when no git history
+  linesPerDay: number | null; // null when velocity is not measured
   activeDays: number;
   suggestedChunks: number;
   skippedVelocity: boolean;
+  velocityNote: string;
 }
 
+/**
+ * Velocity is only measured for a git RANGE audit, where the diff and
+ * the history belong to the same repo. A diff FILE carries no repo
+ * context: the velocity of whatever repo happens to be the current
+ * directory would punish the audit for unrelated commits (caught by
+ * CI run 42980171505: the fixture audit inherited the factory repo's
+ * own 3,080 lines/day).
+ */
 export function analyzeReview(
   repoDir: string | null,
   totalChanged: number,
+  measureVelocity = true,
 ): ReviewResult {
   const band = detectionEstimate(totalChanged);
   let linesPerDay: number | null = null;
   let activeDays = 0;
   let skippedVelocity = true;
-  if (repoDir) {
+  let velocityNote = "velocity not measured (diff file has no repo context)";
+  if (repoDir && measureVelocity) {
     const v = velocityLines(repoDir, 30);
     activeDays = v.activeDays;
     if (v.activeDays > 0) {
       linesPerDay = v.lines / v.activeDays;
       skippedVelocity = false;
+      velocityNote = "";
+    } else {
+      velocityNote = "velocity unknown (no commits in 30d)";
     }
+  } else if (repoDir && !measureVelocity) {
+    velocityNote = "velocity not measured (diff file has no repo context)";
   }
   return {
     totalChanged,
@@ -73,5 +89,6 @@ export function analyzeReview(
     activeDays,
     suggestedChunks: Math.max(1, Math.ceil(totalChanged / EFFECTIVE_REVIEW_BAND)),
     skippedVelocity,
+    velocityNote,
   };
 }

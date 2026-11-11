@@ -183,6 +183,22 @@ test("e2e: git range audit - small human commit is ROBUST", () => {
   assert.match(r.out, /0% orphan lines/);
 });
 
+test("e2e: diff-file audit ignores the current repo's velocity (regression)", () => {
+  // CI run 42980171505: the fixture audit inherited the checkout repo's
+  // own 3,080 lines/day and scored 35 instead of 47. A diff file has no
+  // repo context, so velocity must not leak in, however busy the repo is.
+  const dir = makeRepo();
+  const big = Array.from({ length: 5000 }, (_, i) => `export const v${i} = ${i};`).join("\n") + "\n";
+  writeFileSync(join(dir, "src", "big.ts"), big);
+  git(dir, "add", ".");
+  git(dir, "commit", "-m", "Add generated big file");
+  const r = runCli(["audit", "--diff", join(ROOT, "examples", "pr-fragile.diff")], dir);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /FRAGILITY SCORE 47\/100/);
+  assert.match(r.out, /velocity not measured \(diff file has no repo context\)/);
+  assert.doesNotMatch(r.out, /\/day over 30d/);
+});
+
 test("e2e: audit outside a git repo without --diff -> exit 2", () => {
   const dir = mkdtempSync(join(tmpdir(), "fragility-nogit-"));
   const r = runCli(["audit"], dir);
